@@ -1,0 +1,45 @@
+---
+import { cn } from "../../utils/utils"
+---
+
+<div class="relative">
+  <button id="contact-button" class={cn("relative pl-10", "group")}>
+    <!-- text (black) -->
+    <div class={cn("js-text", "relative pb-0.5")}>
+      <div class={cn("js-underline", "absolute inset-x-0 bottom-0", "border-b-2 border-black")}></div>
+      <span class="font-bold uppercase">Contact</span>
+    </div>
+  </button>
+
+  <!-- final shape (geometry reference for the panel) -->
+  <div
+    class={cn(
+      "js-target",
+      "fixed top-0 right-0",
+      "h-[450px] w-[400px]",
+      "rounded-[10px] bg-green-500/20",
+      "pointer-events-none"
+    )}
+  >
+  </div>
+
+  <!-- morphing red shape + the clip path it shares with the masked text -->
+  <svg class={cn("js-svg", "pointer-events-none fixed inset-0")} preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <clipPath id="shapeClip" clipPathUnits="userSpaceOnUse">
+        <path class="js-clip"></path>
+      </clipPath>
+    </defs>
+    <path class={cn("js-shape", "fill-red-500")}></path>
+  </svg>
+
+  <!-- masked text, revealed by the morphing path itself -->
+  <div class={cn("js-mask", "pointer-events-none fixed inset-0")} style="clip-path: url(#shapeClip)">
+    <div class={cn("js-mask-text", "absolute")}>
+      <div class="relative pb-0.5">
+        <div class={cn("js-underline", "absolute inset-x-0 bottom-0", "border-b-2 border-white")}></div>
+        <span class="font-bold text-white uppercase">Contact</span>
+      </div>
+    </div>
+  </div>
+</div>

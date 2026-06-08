@@ -5,10 +5,12 @@ import { DomScrollManager } from "./DomScrollManager"
 import { PreloaderManager } from "../components/Preloader/PreloaderManager"
 import { RouteManager } from "./RouteManager"
 import { pageManagerRegistry } from "./PageManager"
+import { HoverButtonManager } from "../components/HoverButton/HoverButton"
 
 class AppManager {
   // components
   preloaderManager: PreloaderManager
+  hoverButtonManager: HoverButtonManager
 
   // variables
   size = { width: 0, height: 0 }
@@ -21,7 +23,7 @@ class AppManager {
     Properties.routeManager.completeTransition()
   }
 
-  onInitialAssetsLoaded() {}
+  onInitialAssetsLoaded() { }
 
   animateInContent() {
     Properties.routeManager.completeTransition()
@@ -54,6 +56,8 @@ class AppManager {
       Properties.lenis?.resize()
       Properties.domScrollManager?.resize()
       pageManagerRegistry.resize()
+
+      this.hoverButtonManager.resize()
     }
   }
 
@@ -113,6 +117,9 @@ class AppManager {
     Properties.loader.onLoadAnimationComplete.addOnce(this.animateInContent.bind(this))
     Properties.loader.onProgress.add(this.onProgress.bind(this))
     Properties.loader.load()
+
+    // setup components
+    this.hoverButtonManager = new HoverButtonManager()
 
     // Start update loop and resize handling
     this.update()
