@@ -1,6 +1,7 @@
 import { gsap } from "gsap"
 import { MorphSVGPlugin } from "gsap/MorphSVGPlugin"
-import { queryOrThrow, queryAllOrThrow } from "../../utils/utils"
+import { Properties } from "../../utils/properties"
+import { getRandomId, queryOrThrow, queryAllOrThrow } from "../../utils/utils"
 
 gsap.registerPlugin(MorphSVGPlugin)
 
@@ -12,14 +13,20 @@ const MORPH_DURATION = 0.6
 const HOVER_EASE = "power3.out"
 const MORPH_EASE = "power2.out"
 
-export class HoverButtonManager {
+/**
+ * A single hover button instance. Owns one `.js-hover-button` root and every
+ * `.js-*` element scoped beneath it, plus its event listeners and tweens.
+ */
+export class HoverButton {
   // html
+  root: HTMLElement
   button: HTMLElement
   text: HTMLElement
   target: HTMLElement
   svg: SVGSVGElement
   shape: SVGPathElement
   clip: SVGPathElement
+  mask: HTMLElement
   maskText: HTMLElement
   underlines: HTMLElement[]
 
@@ -30,6 +37,11 @@ export class HoverButtonManager {
   restingD = ""
   hoverD = ""
   panelD = ""
+
+  // pre-bound handlers (stored so they can be removed on destroy)
+  private boundHoverIn = this.onHoverIn.bind(this)
+  private boundHoverOut = this.onHoverOut.bind(this)
+  private boundClick = this.onClick.bind(this)
 
   /* ---------------------------------- shape --------------------------------- */
   // Every state is one rounded-rect path (a circle is just a square with
@@ -132,20 +144,28 @@ export class HoverButtonManager {
   }
 
   /* ---------------------------------- main ---------------------------------- */
-  constructor() {
-    this.button = queryOrThrow("#contact-button")
-    this.text = queryOrThrow(".js-text", this.button)
-    this.target = queryOrThrow(".js-target")
-    this.svg = queryOrThrow<SVGSVGElement>(".js-svg")
-    this.shape = queryOrThrow<SVGPathElement>(".js-shape")
-    this.clip = queryOrThrow<SVGPathElement>(".js-clip")
-    this.maskText = queryOrThrow(".js-mask-text")
-    this.underlines = Array.from(queryAllOrThrow(".js-underline"))
+  constructor(root: HTMLElement) {
+    this.root = root
+    this.button = queryOrThrow(".js-button", root)
+    this.text = queryOrThrow(".js-text", root)
+    this.target = queryOrThrow(".js-target", root)
+    this.svg = queryOrThrow<SVGSVGElement>(".js-svg", root)
+    this.shape = queryOrThrow<SVGPathElement>(".js-shape", root)
+    this.clip = queryOrThrow<SVGPathElement>(".js-clip", root)
+    this.mask = queryOrThrow(".js-mask", root)
+    this.maskText = queryOrThrow(".js-mask-text", root)
+    this.underlines = Array.from(queryAllOrThrow(".js-underline", root))
+
+    // give this instance a unique clip id so multiple buttons don't collide
+    const clipId = `shapeClip-${getRandomId()}`
+    const clipPath = this.clip.parentElement as unknown as SVGClipPathElement
+    clipPath.id = clipId
+    this.mask.style.clipPath = `url(#${clipId})`
 
     // setup events
-    this.button.addEventListener("mouseenter", this.onHoverIn.bind(this))
-    this.button.addEventListener("mouseleave", this.onHoverOut.bind(this))
-    this.button.addEventListener("click", this.onClick.bind(this))
+    this.button.addEventListener("mouseenter", this.boundHoverIn)
+    this.button.addEventListener("mouseleave", this.boundHoverOut)
+    this.button.addEventListener("click", this.boundClick)
 
     // post update
     gsap.set(this.underlines, { scaleX: 0, transformOrigin: "left center" })
@@ -154,5 +174,67 @@ export class HoverButtonManager {
 
   resize() {
     this.layout()
+  }
+
+  /**
+   * Tear down listeners and tweens. Called when this button's root leaves the DOM.
+   */
+  destroy() {
+    this.button.removeEventListener("mouseenter", this.boundHoverIn)
+    this.button.removeEventListener("mouseleave", this.boundHoverOut)
+    this.button.removeEventListener("click", this.boundClick)
+
+    gsap.killTweensOf([this.shape, this.clip, this.maskText, ...this.underlines])
+  }
+}
+
+/**
+ * Tracks every {@link HoverButton} on the page. On each route transition it
+ * reconciles its set against the live `.js-hover-button` roots — destroying
+ * instances whose root disappeared and initialising instances for new roots.
+ */
+export class HoverButtonManager {
+  private instances = new Map<HTMLElement, HoverButton>()
+  private boundReconcile = this.reconcile.bind(this)
+
+  constructor() {
+    Properties.routeManager.onRouteChange.add(this.boundReconcile)
+
+    // pick up whatever is on the page for the initial route
+    this.reconcile()
+  }
+
+  /**
+   * Diff the tracked instances against the roots currently in the DOM.
+   */
+  private reconcile() {
+    const roots = Array.from(document.querySelectorAll<HTMLElement>(".js-hover-button"))
+    const rootSet = new Set(roots)
+
+    // destroy instances whose root has left the DOM
+    this.instances.forEach((instance, root) => {
+      if (!rootSet.has(root)) {
+        instance.destroy()
+        this.instances.delete(root)
+      }
+    })
+
+    // init instances for newly appeared roots
+    roots.forEach((root) => {
+      if (!this.instances.has(root)) {
+        this.instances.set(root, new HoverButton(root))
+      }
+    })
+  }
+
+  resize() {
+    this.instances.forEach((instance) => instance.resize())
+  }
+
+  destroy() {
+    Properties.routeManager.onRouteChange.remove(this.boundReconcile)
+
+    this.instances.forEach((instance) => instance.destroy())
+    this.instances.clear()
   }
 }

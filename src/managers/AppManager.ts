@@ -139,6 +139,7 @@ class AppManager {
     // (boundUpdate won't be called after this)
 
     // Clean up managers
+    this.hoverButtonManager.destroy()
     pageManagerRegistry.destroy()
     Properties.routeManager?.destroy()
     Properties.domScrollManager?.destroy()
