@@ -1,0 +1,46 @@
+---
+import Preloader from "../components/Preloader/Preloader.astro"
+import { cn } from "../utils/utils"
+
+import "../styles/global.css"
+import "lenis/dist/lenis.css"
+
+interface Props {
+  title?: string
+  description?: string
+  ogTitle?: string
+  ogDescription?: string
+  ogImage?: string
+}
+
+const { title = "Layout", description = "This is the base layout", ogTitle, ogDescription, ogImage } = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={ogTitle || title} />
+    <meta property="og:description" content={ogDescription || description} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+  </head>
+  <body class={cn("bg-bgColor text-contentColor")}>
+    <div
+      id="sizer"
+      class={cn("fixed top-0 left-0 h-[100vh] w-[100vw]", "pointer-events-none select-none", "invisible opacity-0")}
+    >
+    </div>
+
+    <Preloader />
+
+    <!-- content -->
+    <main id="page-container" class="relative">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<script src="../managers/AppManager.ts"></script>

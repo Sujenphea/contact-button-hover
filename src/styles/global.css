@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    var(--ppNeueMontreal), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --breakpoint-sm: 320px;
+  --breakpoint-md: 480px;
+  --breakpoint-lg: 768px;
+  --breakpoint-xl: 1024px;
+  --breakpoint-2xl: 1280px;
+  --breakpoint-3xl: 1536px;
+
+  --color-bgColor: #ffffff;
+  --color-contentColor: #000000;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+button {
+  cursor: pointer;
+}

@@ -1,0 +1,36 @@
+---
+import { cn } from "../../utils/utils"
+import { PreloaderManager } from "./PreloaderManager"
+
+export const preloaderContainerId = "loader-container"
+export const preloaderLoaderProgressId = "loader-progress"
+---
+
+<div id={preloaderContainerId} class={cn("z-2", "fixed inset-0")}>
+  {/* bg */}
+  <div class={cn("absolute inset-0", "pointer-events-none select-none", "bg-black")}></div>
+
+  {/* content */}
+  <div class={cn("relative h-full w-full", "flex flex-col items-center justify-center gap-10 lg:gap-20")}>
+    {/* progress bar */}
+    <div class={cn("h-[2px] w-1/4 max-w-[400px]", "rounded-full", "overflow-hidden")}>
+      <div
+        id={preloaderLoaderProgressId}
+        class={cn("h-full w-full", "rounded-[inherit]", "origin-center")}
+        style={{
+          transform: "scaleX(0%)",
+          background: "linear-gradient(90deg, #fff, #fff)",
+          backgroundSize: "400px 20px",
+          backgroundRepeat: "repeat",
+          backgroundOrigin: "center",
+        }}
+      >
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { PreloaderManager } from "./PreloaderManager"
+  new PreloaderManager()
+</script>
