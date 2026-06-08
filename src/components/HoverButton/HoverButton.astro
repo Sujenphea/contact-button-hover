@@ -1,13 +1,19 @@
 ---
 import { cn } from "../../utils/utils"
+
+interface Props {
+  label?: string
+}
+
+const { label = "Contact" } = Astro.props
 ---
 
 <div class={cn("js-hover-button", "relative")}>
-  <button class={cn("js-button", "relative pl-10", "group")}>
+  <button type="button" aria-expanded="false" class={cn("js-button", "relative pl-10", "group")}>
     <!-- text (black) -->
     <div class={cn("js-text", "relative pb-0.5")}>
       <div class={cn("js-underline", "absolute inset-x-0 bottom-0", "border-b-2 border-black")}></div>
-      <span class="font-bold uppercase">Contact</span>
+      <span class="font-bold uppercase">{label}</span>
     </div>
   </button>
 
@@ -34,11 +40,11 @@ import { cn } from "../../utils/utils"
   </svg>
 
   <!-- masked text, revealed by the morphing path itself -->
-  <div class={cn("js-mask", "pointer-events-none fixed inset-0")}>
+  <div class={cn("js-mask", "pointer-events-none fixed inset-0")} aria-hidden="true">
     <div class={cn("js-mask-text", "absolute")}>
       <div class="relative pb-0.5">
         <div class={cn("js-underline", "absolute inset-x-0 bottom-0", "border-b-2 border-white")}></div>
-        <span class="font-bold text-white uppercase">Contact</span>
+        <span class="font-bold text-white uppercase">{label}</span>
       </div>
     </div>
   </div>

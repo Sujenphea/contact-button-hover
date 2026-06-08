@@ -33,15 +33,24 @@ export class HoverButton {
   // states
   isOpen = false
   isHovering = false
+  isFocused = false
 
   restingD = ""
   hoverD = ""
   panelD = ""
 
+  // hover and keyboard focus share the same expanded visual
+  private get isActive() {
+    return this.isHovering || this.isFocused
+  }
+
   // pre-bound handlers (stored so they can be removed on destroy)
   private boundHoverIn = this.onHoverIn.bind(this)
   private boundHoverOut = this.onHoverOut.bind(this)
+  private boundFocus = this.onFocus.bind(this)
+  private boundBlur = this.onBlur.bind(this)
   private boundClick = this.onClick.bind(this)
+  private boundKeyDown = this.onKeyDown.bind(this)
 
   /* ---------------------------------- shape --------------------------------- */
   // Every state is one rounded-rect path (a circle is just a square with
@@ -85,14 +94,20 @@ export class HoverButton {
   }
 
   /* -------------------------------- animation ------------------------------- */
+  // Snap (duration 0) instead of tweening when the user prefers reduced motion.
+  private prefersReducedMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  }
+
   morphTo(d: string, duration: number, ease: string) {
-    gsap.to([this.shape, this.clip], { morphSVG: d, duration, ease, overwrite: true })
+    const dur = this.prefersReducedMotion() ? 0 : duration
+    gsap.to([this.shape, this.clip], { morphSVG: d, duration: dur, ease, overwrite: true })
   }
 
   showUnderlines(show: boolean) {
     gsap.to(this.underlines, {
       scaleX: show ? 1 : 0,
-      duration: HOVER_DURATION,
+      duration: this.prefersReducedMotion() ? 0 : HOVER_DURATION,
       ease: HOVER_EASE,
       overwrite: true,
     })
@@ -116,30 +131,56 @@ export class HoverButton {
   }
 
   /* --------------------------------- events --------------------------------- */
+  // Reflect the current hover/focus state onto the shape (no-op while open).
+  private refresh() {
+    if (this.isOpen) return
+    this.morphTo(this.isActive ? this.hoverD : this.restingD, HOVER_DURATION, HOVER_EASE)
+    this.showUnderlines(this.isActive)
+  }
+
+  setOpen(open: boolean) {
+    this.isOpen = open
+    this.button.setAttribute("aria-expanded", String(open))
+
+    if (open) {
+      this.morphTo(this.panelD, MORPH_DURATION, MORPH_EASE)
+      this.showUnderlines(true) // retain the text's hover state while open
+    } else {
+      this.morphTo(this.isActive ? this.hoverD : this.restingD, MORPH_DURATION, MORPH_EASE)
+      this.showUnderlines(this.isActive)
+    }
+  }
+
   onHoverIn() {
     this.isHovering = true
-    if (this.isOpen) return
-
-    this.morphTo(this.hoverD, HOVER_DURATION - 0.1, HOVER_EASE)
-    this.showUnderlines(true)
+    this.refresh()
   }
 
   onHoverOut() {
     this.isHovering = false
-    if (this.isOpen) return
+    this.refresh()
+  }
 
-    this.morphTo(this.restingD, HOVER_DURATION, HOVER_EASE)
-    this.showUnderlines(false)
+  onFocus() {
+    // only mirror keyboard focus; a mouse click already triggers the hover state
+    if (!this.button.matches(":focus-visible")) return
+    this.isFocused = true
+    this.refresh()
+  }
+
+  onBlur() {
+    this.isFocused = false
+    this.refresh()
   }
 
   onClick() {
-    this.isOpen = !this.isOpen
-    if (this.isOpen) {
-      this.morphTo(this.panelD, MORPH_DURATION, MORPH_EASE)
-      this.showUnderlines(true) // retain the text's hover state while open
-    } else {
-      this.morphTo(this.isHovering ? this.hoverD : this.restingD, MORPH_DURATION, MORPH_EASE)
-      this.showUnderlines(this.isHovering)
+    this.setOpen(!this.isOpen)
+  }
+
+  onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape" && this.isOpen) {
+      this.setOpen(false)
+      this.button.focus()
     }
   }
 
@@ -162,10 +203,19 @@ export class HoverButton {
     clipPath.id = clipId
     this.mask.style.clipPath = `url(#${clipId})`
 
+    // link the button to its panel for assistive tech (unique id per instance)
+    const panelId = `hoverPanel-${getRandomId()}`
+    this.target.id = panelId
+    this.button.setAttribute("aria-controls", panelId)
+    this.button.setAttribute("aria-expanded", "false")
+
     // setup events
     this.button.addEventListener("mouseenter", this.boundHoverIn)
     this.button.addEventListener("mouseleave", this.boundHoverOut)
+    this.button.addEventListener("focus", this.boundFocus)
+    this.button.addEventListener("blur", this.boundBlur)
     this.button.addEventListener("click", this.boundClick)
+    this.button.addEventListener("keydown", this.boundKeyDown)
 
     // post update
     gsap.set(this.underlines, { scaleX: 0, transformOrigin: "left center" })
@@ -182,7 +232,10 @@ export class HoverButton {
   destroy() {
     this.button.removeEventListener("mouseenter", this.boundHoverIn)
     this.button.removeEventListener("mouseleave", this.boundHoverOut)
+    this.button.removeEventListener("focus", this.boundFocus)
+    this.button.removeEventListener("blur", this.boundBlur)
     this.button.removeEventListener("click", this.boundClick)
+    this.button.removeEventListener("keydown", this.boundKeyDown)
 
     gsap.killTweensOf([this.shape, this.clip, this.maskText, ...this.underlines])
   }
