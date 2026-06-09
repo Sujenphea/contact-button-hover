@@ -218,4 +218,14 @@ export default [
       "no-param-reassign": "error",
     },
   },
+
+  // Node-context files (config files and tests)
+  {
+    files: ["*.config.{js,ts,mjs}", "**/*.config.{js,ts,mjs}", "tests/**/*.{js,ts}"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
 ]

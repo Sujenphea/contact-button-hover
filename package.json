@@ -1,7 +1,10 @@
 {
-  "name": "template-threejs-astro",
+  "name": "contact-button-hover",
+  "description": "An animated contact button for Astro with a morphing SVG panel and masked text reveal, powered by GSAP and Tailwind CSS.",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "sujenphea",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

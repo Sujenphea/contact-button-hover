@@ -1,6 +1,4 @@
-import { Vector3Like } from "three"
-
-const _sfc32 = (a: number, b: number, c: number, d: number) => {
+const _sfc32 =(a: number, b: number, c: number, d: number) => {
   return () => {
     // eslint-disable-next-line no-param-reassign
     a |= 0
@@ -97,17 +95,6 @@ export class MathUtil {
    */
   static mix(min: number, max: number, t: number) {
     return min * (1 - t) + max * t
-  }
-
-  /**
-   * Linear interpolation between two Vector3 values
-   */
-  static mixVec3(min: Vector3Like, max: Vector3Like, t: number): Vector3Like {
-    const x = min.x * (1 - t) + max.x * t
-    const y = min.y * (1 - t) + max.y * t
-    const z = min.z * (1 - t) + max.z * t
-
-    return { x, y, z }
   }
 
   /**
